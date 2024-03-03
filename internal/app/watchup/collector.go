@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Collector is a struct that contains the state of the collector.
 type Collector struct {
 	codeLog map[string]lastCode
 	sum     map[int]time.Duration
@@ -19,8 +20,10 @@ type lastCode struct {
 	count int64
 }
 
+// WatchCodeStats is a map of status codes to the total time spent on them.
 type WatchCodeStats map[int]time.Duration
 
+// Start starts the collector and listens for results on the bus.
 func (c *Collector) Start(bus ChanBus) {
 
 	c.codeLog = make(map[string]lastCode)
@@ -61,12 +64,14 @@ func (c *Collector) Start(bus ChanBus) {
 	}
 }
 
+// Stop stops the collector and prints the total time spent on each status code.
 func (c *Collector) Stop() {
 	for code, duration := range c.sum {
 		fmt.Printf("Total time for %s: %s\n", FormatStatusCode(code), duration)
 	}
 }
 
+// RequestStats is a struct that contains statistics about the requests.
 type RequestStats struct {
 	TotalRequests int64
 	TotalTime     time.Duration

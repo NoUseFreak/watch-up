@@ -1,15 +1,16 @@
-package ui
+package log
 
 import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/nousefreak/watch-up/internal/app/ui/style"
 )
 
 func NewLogViewModel(width, height int) LogViewModel {
 	vp := viewport.New(width, height)
-	vp.Style = focusedBorderStyle
+	vp.Style = style.FocusedBorderStyle
 	return LogViewModel{
 		Entries:  []string{},
 		Limit:    height,

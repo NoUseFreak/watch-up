@@ -1,4 +1,4 @@
-package ui
+package statbox
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,7 +13,7 @@ type StatBox struct {
 	Width  int
 }
 
-func NewStatBox(title string) StatBox {
+func New(title string) StatBox {
 	return StatBox{
 		Title:  title,
 		Value:  "0",

@@ -45,7 +45,7 @@ func runApp(appSettings watchup.AppSettings) {
 }
 
 func startApp(bus watchup.ChanBus, appSettings watchup.AppSettings) {
-	if _, err := tea.NewProgram(ui.New(bus, appSettings), tea.WithAltScreen()).Run(); err != nil {
+	if _, err := tea.NewProgram(ui.NewAppModel(bus, appSettings), tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Error while running program:", err)
 		os.Exit(1)
 	}

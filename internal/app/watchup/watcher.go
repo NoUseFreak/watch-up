@@ -10,6 +10,7 @@ import (
 	"github.com/tcnksm/go-httpstat"
 )
 
+// Watcher is a struct that contains the state of the watcher.
 type Watcher struct {
 	url    string
 	loop   time.Duration
@@ -18,6 +19,7 @@ type Watcher struct {
 	stop chan struct{}
 }
 
+// NewWatcher returns a new Watcher.
 func NewWatcher(url string, loop time.Duration) *Watcher {
 	return &Watcher{
 		url:  url,
@@ -28,6 +30,7 @@ func NewWatcher(url string, loop time.Duration) *Watcher {
 	}
 }
 
+// Start starts the watcher and sends results to the bus.
 func (w *Watcher) Start(bus ChanBus) {
 	w.stop = make(chan struct{})
 
@@ -46,6 +49,7 @@ func (w *Watcher) Start(bus ChanBus) {
 	}
 }
 
+// Stop stops the watcher.
 func (w *Watcher) Stop() {
 	close(w.stop)
 }
@@ -101,6 +105,7 @@ func (w *Watcher) doRequest() WatchResult {
 	}
 }
 
+// WatchResult is a struct that contains the result of a request.
 type WatchResult struct {
 	Url        string
 	HttpStats  httpstat.Result

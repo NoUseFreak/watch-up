@@ -1,4 +1,4 @@
-package ui
+package stopwatch
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/stopwatch"
 )
 
-func newStopwatch() stopwatch.Model {
+func New() stopwatch.Model {
 	s := stopwatch.NewWithInterval(time.Second)
 
 	return s

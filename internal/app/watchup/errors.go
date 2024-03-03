@@ -56,6 +56,7 @@ const (
 	E_REFUSED = 8
 )
 
+// CodeToText returns the text representation of the error code.
 func CodeToText(code int) string {
 	text := http.StatusText(code)
 	if text != "" {

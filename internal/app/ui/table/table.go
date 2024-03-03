@@ -1,19 +1,19 @@
-package ui
+package table
 
 import (
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
 )
 
-var tableColumns = []table.Column{
+var Columns = []table.Column{
 	{Title: "Code", Width: 10},
 	{Title: "Name", Width: 30},
 	{Title: "Duration", Width: 10},
 }
 
-func newTable() table.Model {
+func New() table.Model {
 	t := table.New(
-		table.WithColumns(tableColumns),
+		table.WithColumns(Columns),
 		table.WithFocused(false),
 	)
 	s := table.DefaultStyles()

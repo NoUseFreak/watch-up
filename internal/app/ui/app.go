@@ -8,9 +8,13 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/stopwatch"
-	"github.com/charmbracelet/bubbles/table"
+	tablelib "github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/nousefreak/watch-up/internal/app/ui/history"
+	"github.com/nousefreak/watch-up/internal/app/ui/statbox"
+	"github.com/nousefreak/watch-up/internal/app/ui/style"
+	"github.com/nousefreak/watch-up/internal/app/ui/table"
 	"github.com/nousefreak/watch-up/internal/app/watchup"
 )
 
@@ -18,30 +22,11 @@ const (
 	helpHeight = 5
 )
 
-var (
-	focusedBorderStyle = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("238"))
-
-	halfWidthStyle = lipgloss.NewStyle().
-			Width(50)
-
-	keyStyle = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{
-		Light: "#909090",
-		Dark:  "#626262",
-	})
-
-	descStyle = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{
-		Light: "#B2B2B2",
-		Dark:  "#4A4A4A",
-	})
-)
-
 type keymap = struct {
 	pause, quit key.Binding
 }
 
-type model struct {
+type appModel struct {
 	width  int
 	height int
 	keymap keymap
@@ -51,24 +36,25 @@ type model struct {
 	bus watchup.ChanBus
 
 	help       help.Model
-	history    HistoryViewModel
-	table      table.Model
+	history    history.HistoryViewModel
+	table      tablelib.Model
 	stopwatch  stopwatch.Model
-	avgStat    StatBox
-	jitterStat StatBox
-	countStat  StatBox
+	avgStat    statbox.StatBox
+	jitterStat statbox.StatBox
+	countStat  statbox.StatBox
 }
 
-func New(bus watchup.ChanBus, appSettings watchup.AppSettings) model {
-	m := model{
+// NewAppModel returns a new appModel.
+func NewAppModel(bus watchup.ChanBus, appSettings watchup.AppSettings) appModel {
+	m := appModel{
 		bus:         bus,
 		appSettings: appSettings,
-		history:     NewHistoryViewModel(20, 20),
-		table:       newTable(),
-		stopwatch:   newStopwatch(),
-		avgStat:     NewStatBox("Average"),
-		jitterStat:  NewStatBox("Jitter"),
-		countStat:   NewStatBox("Count"),
+		history:     history.New(20, 20),
+		table:       table.New(),
+		stopwatch:   stopwatch.New(),
+		avgStat:     statbox.New("Average"),
+		jitterStat:  statbox.New("Jitter"),
+		countStat:   statbox.New("Count"),
 		help:        help.New(),
 		keymap: keymap{
 			pause: key.NewBinding(
@@ -103,7 +89,8 @@ func waitForRequestStats(bus watchup.ChanBus) tea.Cmd {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+// Init initializes the appModel.
+func (m appModel) Init() tea.Cmd {
 	return tea.Batch(
 		m.stopwatch.Start(),
 		waitForCodeStats(m.bus),
@@ -112,7 +99,8 @@ func (m model) Init() tea.Cmd {
 	)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+// Update updates the appModel.
+func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
@@ -127,7 +115,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.width = msg.Width
 	case watchup.WatchCodeStats:
-		data := []table.Row{}
+		data := []tablelib.Row{}
 		keys := make([]int, 0, len(msg))
 		for k := range msg {
 			keys = append(keys, k)
@@ -136,7 +124,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sort.Ints(keys)
 
 		for _, code := range keys {
-			data = append(data, table.Row{
+			data = append(data, tablelib.Row{
 				watchup.FormatStatusCode(code),
 				watchup.CodeToText(code),
 				msg[code].Truncate(time.Second).String(),
@@ -181,7 +169,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *model) sizeInputs() {
+func (m *appModel) sizeInputs() {
 	col := m.width / 12
 
 	sBoxHeight := 5
@@ -189,10 +177,10 @@ func (m *model) sizeInputs() {
 	m.history.Width = col * 6
 	m.history.Height = (m.height - helpHeight)
 	m.table.SetWidth(col*6 - 2)
-	tableColumns[1].Width = m.table.Width() - 6 - tableColumns[0].Width - tableColumns[2].Width
-	m.table.SetColumns(tableColumns)
+	table.Columns[1].Width = m.table.Width() - 6 - table.Columns[0].Width - table.Columns[2].Width
+	m.table.SetColumns(table.Columns)
 	m.table.SetHeight(m.height - helpHeight - sBoxHeight - 2)
-	halfWidthStyle.Width(col * 6)
+	style.HalfWidthStyle.Width(col * 6)
 
 	m.avgStat.Width = col*2 - 2
 	m.avgStat.Height = sBoxHeight - 2
@@ -202,12 +190,13 @@ func (m *model) sizeInputs() {
 	m.countStat.Height = sBoxHeight - 2
 }
 
-func (m *model) updateKeybindings() {
+func (m *appModel) updateKeybindings() {
 	// m.keymap.add.SetEnabled(len(m.inputs) < maxInputs)
 	// m.keymap.remove.SetEnabled(len(m.inputs) > minInputs)
 }
 
-func (m model) View() string {
+// View returns the appModel's view.
+func (m appModel) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.pause,
 		m.keymap.quit,
@@ -215,15 +204,15 @@ func (m model) View() string {
 
 	stopwatch := fmt.Sprintf(
 		"%s %-10s",
-		descStyle.Render("Elapsed:"),
-		keyStyle.Render(m.stopwatch.View()),
+		style.DescStyle.Render("Elapsed:"),
+		style.KeyStyle.Render(m.stopwatch.View()),
 	)
 
-	titleString := halfWidthStyle.Align(lipgloss.Left).Render(
-		keyStyle.Render(" [Watch Up] "+m.appSettings.URL),
-	) + halfWidthStyle.Align(lipgloss.Right).Render(
-		descStyle.Render(" Loop: ")+
-			keyStyle.Render(m.appSettings.LoopDuration.String()),
+	titleString := style.HalfWidthStyle.Align(lipgloss.Left).Render(
+		style.KeyStyle.Render(" [Watch Up] "+m.appSettings.URL),
+	) + style.HalfWidthStyle.Align(lipgloss.Right).Render(
+		style.DescStyle.Render(" Loop: ")+
+			style.KeyStyle.Render(m.appSettings.LoopDuration.String()),
 	)
 
 	return lipgloss.JoinVertical(
@@ -234,19 +223,19 @@ func (m model) View() string {
 			m.history.View(),
 			lipgloss.JoinVertical(
 				lipgloss.Top,
-				focusedBorderStyle.Render(m.table.View()),
+				style.FocusedBorderStyle.Render(m.table.View()),
 				lipgloss.JoinHorizontal(
 					lipgloss.Top,
-					focusedBorderStyle.Render(m.avgStat.View()),
-					focusedBorderStyle.Render(m.jitterStat.View()),
-					focusedBorderStyle.Render(m.countStat.View()),
+					style.FocusedBorderStyle.Render(m.avgStat.View()),
+					style.FocusedBorderStyle.Render(m.jitterStat.View()),
+					style.FocusedBorderStyle.Render(m.countStat.View()),
 				),
 			),
 		),
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
-			halfWidthStyle.Align(lipgloss.Left).Render(help),
-			halfWidthStyle.Align(lipgloss.Right).Render(stopwatch),
+			style.HalfWidthStyle.Align(lipgloss.Left).Render(help),
+			style.HalfWidthStyle.Align(lipgloss.Right).Render(stopwatch),
 		),
 	)
 }

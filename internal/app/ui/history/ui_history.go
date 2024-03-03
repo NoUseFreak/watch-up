@@ -1,4 +1,4 @@
-package ui
+package history
 
 import (
 	"time"
@@ -6,10 +6,11 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/nousefreak/watch-up/internal/app/ui/style"
 	"github.com/nousefreak/watch-up/internal/app/watchup"
 )
 
-func NewHistoryViewModel(width, height int) HistoryViewModel {
+func New(width, height int) HistoryViewModel {
 	tableColumns := []table.Column{
 		{Title: "Timestamp", Width: 27},
 		{Title: "Code", Width: 10},
@@ -74,7 +75,7 @@ func (l *HistoryViewModel) View() string {
 
 	l.table.SetRows(data)
 
-	return focusedBorderStyle.Render(l.table.View())
+	return style.FocusedBorderStyle.Render(l.table.View())
 }
 
 func (l *HistoryViewModel) AddEntry(entry watchup.WatchResult) {

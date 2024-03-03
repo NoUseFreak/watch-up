@@ -27,6 +27,7 @@ func calculateJitter(responseTimes []int64, avgResponseTime int64) int64 {
 	return int64(jitter)
 }
 
+// FormatStatusCode formats the status code with color
 func FormatStatusCode(code int) string {
 	switch {
 	case code < 100:
