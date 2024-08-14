@@ -33,7 +33,7 @@ func New(width, height int) HistoryViewModel {
 
 	return HistoryViewModel{
 		Entries: []watchup.WatchResult{},
-		Limit:   height,
+		Limit:   1000,
 		Width:   width,
 		Height:  height,
 		table:   t,
@@ -74,6 +74,7 @@ func (l *HistoryViewModel) View() string {
 	l.table.SetColumns(l.columns)
 
 	l.table.SetRows(data)
+	l.table.GotoBottom()
 
 	return style.FocusedBorderStyle.Render(l.table.View())
 }
@@ -86,6 +87,8 @@ func (l *HistoryViewModel) AddEntry(entry watchup.WatchResult) {
 }
 
 func (l HistoryViewModel) Update(msg tea.Msg) (HistoryViewModel, tea.Cmd) {
+	l.table.SetWidth(l.Width)
+	l.table.SetHeight(l.Height)
 	// l.viewport.Width = l.Width
 	// l.viewport.Height = l.Height
 
